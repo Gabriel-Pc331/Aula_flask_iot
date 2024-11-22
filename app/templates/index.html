@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador IoT</title>
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-4">Gerenciador IoT</h1>
+
+        <!-- Status Atual -->
+        <div class="my-4">
+            <h2>Status Atual</h2>
+            <p id="status">Estado: carregando...</p>
+            <p id="ocupacao">Ocupação: carregando...</p>
+            <progress id="progress-bar" value="0" max="100"></progress>
+        </div>
+
+        <!-- Controles -->
+        <div class="my-4">
+            <h2>Controles</h2>
+            <button id="btn-open" class="btn btn-primary" onclick="controlTampa('abrir')">Abrir Tampa</button>
+            <button id="btn-close" class="btn btn-danger" onclick="controlTampa('fechar')">Fechar Tampa</button>
+        </div>
+
+        <!-- Histórico de Eventos -->
+        <div class="my-4">
+            <h2>Histórico de Eventos</h2>
+            <button id="clear-history" class="btn btn-warning mb-2">Limpar Histórico</button>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Evento</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                    <!-- Histórico será preenchido aqui -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Gráfico do ThingSpeak -->
+        <div class="my-4">
+            <h2>Gráfico em Tempo Real</h2>
+            <iframe width="450" height="260" style="border: 1px solid #cccccc;" 
+                src="https://thingspeak.com/channels/2746120/charts/1?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&type=line&update=15">
+            </iframe>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        async function updateState() {
+            try {
+                const response = await fetch("/update");
+                const data = await response.json();
+
+                document.getElementById("status").innerText = `Estado: ${data.status}`;
+                document.getElementById("ocupacao").innerText = `Ocupação: ${data.ocupacao}%`;
+                document.getElementById("progress-bar").value = data.ocupacao;
+
+                loadHistory();
+            } catch (error) {
+                console.error("Erro ao atualizar estado:", error);
+            }
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await fetch("/history");
+                const history = await response.json();
+                const tableBody = document.getElementById("history-body");
+
+                tableBody.innerHTML = "";
+                history.forEach(item => {
+                    const row = `<tr><td>${item.date}</td><td>${item.event}</td></tr>`;
+                    tableBody.innerHTML += row;
+                });
+            } catch (error) {
+                console.error("Erro ao carregar histórico:", error);
+            }
+        }
+
+        async function controlTampa(action) {
+            try {
+                await fetch(`/control_tampa/${action}`, { method: "POST" });
+                loadHistory();
+            } catch (error) {
+                console.error(`Erro ao ${action} tampa:`, error);
+            }
+        }
+
+        document.getElementById("clear-history").addEventListener("click", async () => {
+            try {
+                const response = await fetch("/clear_history", { method: "POST" });
+                const result = await response.json();
+                alert(result.message);
+                document.getElementById("history-body").innerHTML = ""; // Limpa a tabela na interface
+            } catch (error) {
+                console.error("Erro ao limpar histórico:", error);
+            }
+        });
+
+        setInterval(updateState, 5000);  // Atualiza o estado a cada 5 segundos
+        window.onload = loadHistory;
+    </script>
+</body>
+</html>
