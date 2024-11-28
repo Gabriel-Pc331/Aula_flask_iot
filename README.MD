@@ -98,13 +98,17 @@ def update_state():
     requests.post(THINGSPEAK_URL, data=payload)
 
     return jsonify(garbage_state)
-Histórico de Eventos (/history): Retorna o histórico de eventos, como abertura e fechamento da tampa.
-python
-Copiar código
+
+## Histórico de Eventos (/history)
+Retorna o histórico de eventos, como abertura e fechamento da tampa.
+
+```python
 @garbage_bp.route("/history", methods=["GET"])
 def get_history():
     return jsonify(event_history)
-Controle da Tampa (/control_tampa/<action>): Permite abrir ou fechar a tampa da lixeira.
+Controle da Tampa (/control_tampa/<action>)
+Permite abrir ou fechar a tampa da lixeira.
+
 python
 Copiar código
 @garbage_bp.route("/control_tampa/<action>", methods=["POST"])
@@ -114,9 +118,13 @@ def control_tampa(action):
     elif action == "fechar":
         piscar_led(LED_VERMELHO, 3, 0.3)
     return jsonify({"message": f"Tampa {action} com sucesso!"})
+    
 Principais Funcionalidades
 Medição de Ocupação: O sistema calcula o nível de ocupação da lixeira com base na altura e na distância medida pelo sensor ultrassônico.
+
 Indicação com LEDs: Os LEDs mostram o status da lixeira (disponível ou cheia) em tempo real.
 Registro de Histórico: Todos os eventos, como abertura e fechamento da tampa, são registrados em um arquivo JSON para referência futura.
+
 Integração com ThingSpeak: Os dados de ocupação são enviados para a nuvem, permitindo o monitoramento remoto.
 Interface com Flask: A interface web permite que você visualize o status da lixeira, controle a tampa e acesse o histórico de eventos.
+
