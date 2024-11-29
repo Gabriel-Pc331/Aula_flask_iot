@@ -35,7 +35,7 @@ STATE_FILE = "state.json"
 HISTORY_FILE = "history.json"
 
 # Configuração do ThingSpeak
-THINGSPEAK_API_KEY = "8IV1THXPM2WV62GN"
+THINGSPEAK_API_KEY = "4UU0PT3X0CXEBMCC"
 THINGSPEAK_URL = "https://api.thingspeak.com/update"
 
 # Funções de persistência
@@ -99,6 +99,7 @@ def medir_ocupacao():
 
     # Calcula o percentual de ocupação
     ocupacao = max(0, min(100, 100 - (distancia / ALTURA_LIXEIRA) * 100))
+    print(f"Distância: {distancia} cm, Ocupação: {ocupacao}%")  # Debug
     return round(ocupacao)
 
 # Função para piscar LEDs
@@ -128,24 +129,37 @@ def index():
 
 @garbage_bp.route("/update", methods=["GET"])
 def update_state():
-    """Atualiza o estado da lixeira e envia para o ThingSpeak."""
+    """Atualiza o estado da lixeira, envia para o ThingSpeak e adiciona ao histórico."""
     global garbage_state
-    ocupacao_atual = medir_ocupacao()
+    ocupacao_atual = medir_ocupacao()  # Chama a função para medir a ocupação
     garbage_state["ocupacao"] = ocupacao_atual
     garbage_state["status"] = "cheia" if ocupacao_atual > 80 else "disponível"
 
-    atualizar_leds()  # Atualiza os LEDs com base no estado
-    save_state(garbage_state)  # Salva o estado
+    # Atualiza LEDs e salva o estado
+    atualizar_leds()
+    save_state(garbage_state)
+
+    # Adiciona o evento ao histórico
+    timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    event = {
+        "date": timestamp,
+        "ocupacao": garbage_state["ocupacao"],
+        "status": garbage_state["status"]
+    }
+    event_history.append(event)
+    save_history(event_history)  # Salva o histórico atualizado
 
     # Envia os dados para o ThingSpeak
     payload = {
         "api_key": THINGSPEAK_API_KEY,
-        "field1": garbage_state["ocupacao"]
+        "field1": garbage_state["ocupacao"]  # A ocupação é enviada para o campo 1
     }
     try:
         response = requests.post(THINGSPEAK_URL, data=payload)
         if response.status_code == 200:
             print("Dados enviados ao ThingSpeak com sucesso!")
+        else:
+            print(f"Erro ao enviar dados: {response.status_code} - {response.text}")
     except Exception as e:
         print(f"Erro ao conectar ao ThingSpeak: {e}")
 
@@ -181,3 +195,4 @@ def control_tampa(action):
 
     save_history(event_history)  # Salva o histórico
     return jsonify({"message": f"Tampa {action} com sucesso!"})
+

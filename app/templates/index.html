@@ -53,30 +53,39 @@
 
     <!-- Scripts -->
     <script>
+        // Função para atualizar o estado da lixeira
         async function updateState() {
             try {
                 const response = await fetch("/update");
                 const data = await response.json();
 
+                // Atualiza os dados na interface
                 document.getElementById("status").innerText = `Estado: ${data.status}`;
                 document.getElementById("ocupacao").innerText = `Ocupação: ${data.ocupacao}%`;
                 document.getElementById("progress-bar").value = data.ocupacao;
 
+                // Atualiza o histórico
                 loadHistory();
             } catch (error) {
                 console.error("Erro ao atualizar estado:", error);
             }
         }
 
+        // Função para carregar o histórico de eventos
         async function loadHistory() {
             try {
                 const response = await fetch("/history");
                 const history = await response.json();
                 const tableBody = document.getElementById("history-body");
 
+                // Limpa o histórico existente
                 tableBody.innerHTML = "";
+
+                // Preenche a tabela com o histórico
                 history.forEach(item => {
-                    const row = `<tr><td>${item.date}</td><td>${item.event}</td></tr>`;
+                    // Verifica se o campo 'event' está presente
+                    const event = item.event || `Ocupação: ${item.ocupacao || 'Indefinido'}%`; // Exibe a ocupação se 'event' não existir
+                    const row = `<tr><td>${item.date}</td><td>${event}</td></tr>`;
                     tableBody.innerHTML += row;
                 });
             } catch (error) {
@@ -84,15 +93,20 @@
             }
         }
 
+        // Função para controlar a tampa (abrir ou fechar)
         async function controlTampa(action) {
             try {
                 await fetch(`/control_tampa/${action}`, { method: "POST" });
+
+                // Atualiza o histórico após a ação
                 loadHistory();
+                updateState(); // Atualiza o estado após controle da tampa
             } catch (error) {
                 console.error(`Erro ao ${action} tampa:`, error);
             }
         }
 
+        // Função para limpar o histórico
         document.getElementById("clear-history").addEventListener("click", async () => {
             try {
                 const response = await fetch("/clear_history", { method: "POST" });
@@ -104,8 +118,14 @@
             }
         });
 
-        setInterval(updateState, 5000);  // Atualiza o estado a cada 5 segundos
-        window.onload = loadHistory;
+        // Configura a atualização do estado a cada 15 segundos
+        setInterval(updateState, 15000);  // Atualiza o estado a cada 15 segundos
+
+        // Carrega o histórico e o estado na primeira carga da página
+        window.onload = () => {
+            loadHistory();
+            updateState(); // Inicializa o estado da lixeira ao carregar a página
+        };
     </script>
 </body>
 </html>
