@@ -2,12 +2,11 @@
 
 Este projeto visa monitorar o nível de ocupação de uma lixeira utilizando um sensor ultrassônico, LEDs para sinalização e uma interface web com Flask. A ocupação é também enviada para o ThingSpeak para análise remota.
 
-Funcionalidades Principais
+## Funcionalidades Principais
 1. Medir Ocupação
 A função medir_ocupacao() usa o sensor ultrassônico HC-SR04 para calcular a distância até a tampa da lixeira e converter isso em um percentual de ocupação.
 
-python
-Copiar código
+
 def medir_ocupacao():
     GPIO.output(TRIG, GPIO.HIGH)
     time.sleep(0.00001)
@@ -22,11 +21,10 @@ def medir_ocupacao():
     distancia = (duracao * 34300) / 2  # Fórmula para calcular a distância em cm
     ocupacao = max(0, min(100, 100 - (distancia / ALTURA_LIXEIRA) * 100))
     return round(ocupacao)
-2. Atualizar LEDs
+
+## Atualizar LEDs
 Dependendo do estado da lixeira (disponível ou cheia), os LEDs são acionados para indicar o status.
 
-python
-Copiar código
 def atualizar_leds():
     if garbage_state["status"] == "cheia":
         GPIO.output(LED_VERDE, GPIO.LOW)
@@ -34,11 +32,11 @@ def atualizar_leds():
     else:
         GPIO.output(LED_VERMELHO, GPIO.LOW)
         GPIO.output(LED_VERDE, GPIO.HIGH)
-3. Rota para Atualizar Estado
+
+## Rota para Atualizar Estado
 A rota /update mede a ocupação da lixeira, atualiza o estado e envia os dados para o ThingSpeak.
 
-python
-Copiar código
+
 @garbage_bp.route("/update", methods=["GET"])
 def update_state():
     ocupacao_atual = medir_ocupacao()  # Medição de ocupação
@@ -55,11 +53,10 @@ def update_state():
     requests.post(THINGSPEAK_URL, data=payload)
 
     return jsonify(garbage_state)
-4. Controle da Tampa
+
+## Controle da Tampa
 Permite controlar a tampa da lixeira (abrir ou fechar) através da rota /control_tampa/<action>.
 
-python
-Copiar código
 @garbage_bp.route("/control_tampa/<action>", methods=["POST"])
 def control_tampa(action):
     if action == "abrir":
