@@ -1,4 +1,5 @@
-Sistema de Monitoramento de Lixeira Inteligente
+                     Sistema de Monitoramento de Lixeira Inteligente
+
 Este projeto visa monitorar o nível de ocupação de uma lixeira utilizando um sensor ultrassônico, LEDs para sinalização e uma interface web com Flask. A ocupação também é enviada para o ThingSpeak para análise remota.
 
 Funcionalidades Principais
@@ -20,6 +21,7 @@ def medir_ocupacao():
     distancia = (duracao * 34300) / 2  # Fórmula para calcular a distância em cm
     ocupacao = max(0, min(100, 100 - (distancia / ALTURA_LIXEIRA) * 100))
     return round(ocupacao)
+
 2. Atualizar LEDs
 Dependendo do estado da lixeira (disponível ou cheia), os LEDs são acionados para indicar o status.
 
@@ -31,6 +33,7 @@ def atualizar_leds():
     else:
         GPIO.output(LED_VERMELHO, GPIO.LOW)
         GPIO.output(LED_VERDE, GPIO.HIGH)
+
 3. Rota para Atualizar Estado
 A rota /update mede a ocupação da lixeira, atualiza o estado e envia os dados para o ThingSpeak.
 
@@ -51,6 +54,7 @@ def update_state():
     requests.post(THINGSPEAK_URL, data=payload)
 
     return jsonify(garbage_state)
+
 4. Controle da Tampa
 Permite controlar a tampa da lixeira (abrir ou fechar) através da rota /control_tampa/<action>.
 
